@@ -1,4 +1,6 @@
 alpm_dep = dependency('libalpm', version: '>=15.0.0')
+curl_dep = dependency('libcurl')
+json_glib_dep = dependency('json-glib-1.0')
 
 shared_module(
   'pk_backend_alpm',
@@ -25,11 +27,23 @@ shared_module(
   'pk-alpm-transaction.h',
   'pk-alpm-update.c',
   'pk-alpm-update.h',
+  'pk-alpm-aur.c',
+  'pk-alpm-aur.h',
+  'pk-alpm-aur-hooks.c',
+  'pk-alpm-aur-hooks.h',
+  'aur-rpc.c',
+  'aur-rpc.h',
+  'aur-srcinfo.c',
+  'aur-srcinfo.h',
+  'aur-builder.c',
+  'aur-builder.h',
   include_directories: packagekit_src_include,
   dependencies: [
     packagekit_glib2_dep,
     alpm_dep,
     gmodule_dep,
+    curl_dep,
+    json_glib_dep,
   ],
   c_args: [
     '-DPK_LOG_PREFIX="PACKAGEKIT"',
