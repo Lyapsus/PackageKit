@@ -25,6 +25,7 @@
 #include "pk-alpm-error.h"
 #include "pk-alpm-groups.h"
 #include "pk-alpm-packages.h"
+#include "pk-alpm-aur-hooks.h"
 
 gchar *
 pk_alpm_pkg_build_id (alpm_pkg_t *pkg)
@@ -173,6 +174,12 @@ pk_backend_resolve_name (PkBackendJob *job, const gchar *name, PkBitfield filter
 		}
 	}
 
+	/* AUR fallback: query AUR RPC by exact name */
+	if (!pk_bitfield_contain (filters, PK_FILTER_ENUM_INSTALLED)) {
+		if (pk_alpm_aur_hook_resolve (job, name, NULL))
+			return TRUE;
+	}
+
 	code = ALPM_ERR_PKG_NOT_FOUND;
 	g_set_error (error, PK_ALPM_ERROR, code, "%s: %s", name,
 		     alpm_strerror (code));
@@ -233,8 +240,15 @@ pk_backend_get_details_thread (PkBackendJob *job, GVariant* params, gpointer p)
 			break;
 
 		pkg = pk_alpm_find_pkg (job, *packages, &error);
-		if (pkg == NULL)
+		if (pkg == NULL) {
+			if (pk_alpm_aur_is_aur_id (*packages)) {
+				g_clear_error (&error);
+				pk_alpm_aur_hook_get_details (job, *packages, &error);
+				if (error == NULL)
+					continue;
+			}
 			break;
+		}
 
 		i = alpm_pkg_get_licenses (pkg);
 		if (i == NULL) {

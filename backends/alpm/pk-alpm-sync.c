@@ -27,6 +27,7 @@
 
 #include "pk-backend-alpm.h"
 #include "pk-alpm-databases.h"
+#include "pk-alpm-aur-hooks.h"
 #include "pk-alpm-error.h"
 #include "pk-alpm-transaction.h"
 #include "pk-alpm-update.h"
@@ -55,7 +56,13 @@ pk_alpm_transaction_sync_targets (PkBackendJob *job, const gchar **packages, gbo
 		}
 
 		if (i == NULL) {
-			alpm_errno_t alpm_err = ALPM_ERR_DB_NOT_FOUND;
+			alpm_errno_t alpm_err;
+
+			/* AUR package — skip, handled after sync commit */
+			if (g_strcmp0 (repo, "aur") == 0)
+				continue;
+
+			alpm_err = ALPM_ERR_DB_NOT_FOUND;
 			g_set_error (error, PK_ALPM_ERROR, alpm_err, "%s/%s: %s",
 				     repo, name, alpm_strerror (alpm_err));
 			return FALSE;
@@ -284,6 +291,10 @@ out:
 	alpm_list_free (asdeps);
 	alpm_list_free_inner (asexplicit, g_free);
 	alpm_list_free (asexplicit);
+
+	/* AUR phase: build+install AUR packages (db lock released) */
+	g_clear_error (&error);
+	pk_alpm_aur_hook_install_packages (job, package_ids, &error);
 
 	pk_alpm_finish (job, error);
 }

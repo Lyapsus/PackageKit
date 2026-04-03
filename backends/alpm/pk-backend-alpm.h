@@ -34,6 +34,7 @@ typedef struct {
 	GFileMonitor    *monitor;
 	alpm_list_t     *configured_repos; /* list of configured repos */
 	gboolean	localdb_changed;
+	gpointer	aur_ctx;          /* PkAlpmAur* — forward-declared to avoid header dep */
 } PkBackendAlpmPrivate;
 
 void		 pk_alpm_run		(PkBackendJob *job, PkStatusEnum status,

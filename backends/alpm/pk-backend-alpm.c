@@ -29,6 +29,7 @@
 #include <pk-backend.h>
 
 #include "pk-backend-alpm.h"
+#include "pk-alpm-aur-hooks.h"
 #include "pk-alpm-config.h"
 #include "pk-alpm-databases.h"
 #include "pk-alpm-error.h"
@@ -157,6 +158,8 @@ pk_backend_initialize (GKeyFile *conf, PkBackend *backend)
 	if (!pk_alpm_initialize_monitor (backend, &error))
 		g_error ("Failed to initialize monitor: %s", error->message);
 
+	pk_alpm_aur_init (backend);
+
 	priv->localdb_changed = FALSE;
 }
 
@@ -167,6 +170,7 @@ pk_backend_destroy (PkBackend *backend)
 	pk_alpm_groups_destroy (backend);
 	pk_alpm_destroy_databases (backend);
 	pk_alpm_destroy_monitor (backend);
+	pk_alpm_aur_destroy (backend);
 
 	if (priv->alpm != NULL) {
 		if (alpm_trans_get_flags (priv->alpm) < 0)

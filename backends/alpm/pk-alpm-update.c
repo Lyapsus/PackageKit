@@ -37,6 +37,7 @@
 #include "pk-alpm-error.h"
 #include "pk-alpm-packages.h"
 #include "pk-alpm-transaction.h"
+#include "pk-alpm-aur-hooks.h"
 #include "pk-alpm-update.h"
 
 static gchar **
@@ -467,6 +468,11 @@ pk_backend_get_updates_thread (PkBackendJob *job, GVariant* params, gpointer p)
 
 		update_count++;
 		pk_alpm_pkg_emit (job, upgrade, info);
+	}
+
+	/* AUR update check for foreign packages */
+	if (!pk_backend_job_is_cancelled (job) && error == NULL) {
+		pk_alpm_aur_hook_get_updates (job, &error);
 	}
 
 	if (g_file_test("/tmp/packagekit-alpm-updates", G_FILE_TEST_EXISTS)) {

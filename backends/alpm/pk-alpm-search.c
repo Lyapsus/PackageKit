@@ -28,6 +28,7 @@
 #include "pk-backend-alpm.h"
 #include "pk-alpm-groups.h"
 #include "pk-alpm-packages.h"
+#include "pk-alpm-aur-hooks.h"
 
 static gpointer
 pk_backend_pattern_needle (PkBackend *backend, const gchar *needle, GError **error)
@@ -420,6 +421,18 @@ pk_backend_search_thread (PkBackendJob *job, GVariant* params, gpointer p)
 
 		pk_backend_search_db (job, i->data, match_func, patterns, filters);
 	}
+
+	/* AUR search after syncdb results */
+	if (!pk_backend_job_is_cancelled (job)) {
+		PkRoleEnum aur_role = pk_backend_job_get_role (job);
+		if ((aur_role == PK_ROLE_ENUM_SEARCH_NAME || aur_role == PK_ROLE_ENUM_SEARCH_DETAILS)) {
+			PkBitfield unused_f;
+			const gchar **search_terms;
+			g_variant_get (params, "(t^a&s)", &unused_f, &search_terms);
+			pk_alpm_aur_hook_search (job, search_terms, &error);
+		}
+	}
+
 out:
 	if (pattern_free != NULL)
 		alpm_list_free_inner (patterns, pattern_free);
