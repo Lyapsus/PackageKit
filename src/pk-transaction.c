@@ -2038,6 +2038,10 @@ pk_transaction_run (PkTransaction *transaction)
 	/* we are no longer waiting, we are setting up */
 	pk_transaction_status_changed_emit (transaction, PK_STATUS_ENUM_SETUP);
 
+	/* set uid early — session state may fail without logind,
+	 * but client_uid is already obtained from D-Bus */
+	pk_backend_job_set_uid (transaction->job, transaction->client_uid);
+
 	/* set proxy */
 	if (!pk_transaction_set_session_state (transaction, &error)) {
 		g_debug ("failed to set the session state (non-fatal): %s",
